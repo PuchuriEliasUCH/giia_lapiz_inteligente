@@ -128,6 +128,51 @@ Los scripts SQL dentro de `sql/` se ejecutan automáticamente al iniciar MySQL:
 
 ---
 
+## Migraciones
+
+> **SOLO SI ESTAS ACTUALIZANDO EL PROYECTO**
+
+Las migraciones controlan los cambios en la estructura de la BD sin perder datos.
+
+### Primera vez clonando el repo
+
+No necesitas correr migraciones. Docker ejecuta `init.sql` automáticamente con la estructura completa.
+
+```bash
+git clone <url-del-repo>
+cd GIIA_lapiz_inteligente
+cp .env.example .env
+docker compose up --build
+```
+
+### Cuando hay migraciones nuevas
+
+Si un compañero agregó cambios a la BD y ya tienes datos locales:
+
+```bash
+make migrate
+```
+
+Alembic aplica todas las migraciones pendientes en orden automáticamente.
+
+### Permisos (solo primera vez en Linux/Mac)
+
+Si no puedes editar archivos dentro de `migrations/`:
+
+```bash
+make permisos
+```
+
+### Comandos de migración
+
+| Acción | Comando |
+| --- | --- |
+| Aplicar migraciones pendientes | `make migrate` |
+| Crear nueva migración | `docker compose exec backend alembic revision --autogenerate -m "descripcion"` |
+| Revertir última migración | `docker compose exec backend alembic downgrade -1` |
+| Ver historial | `docker compose exec backend alembic history` |
+| Ver migración actual | `docker compose exec backend alembic current` |
+
 ## Notas importantes
 
 * Cada integrante debe crear su propio archivo `.env`.

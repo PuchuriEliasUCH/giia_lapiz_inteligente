@@ -22,6 +22,7 @@ create table children (
     dominant_hand enum('derecha', 'izquierda', 'ambidiestro') not null default 'derecha',
     school_grade varchar(30),
     notes text,
+    is_active bool not null default true,
     created_at timestamp not null default current_timestamp,
     updated_at timestamp not null default current_timestamp on update current_timestamp,
     foreign key (user_id) references users(user_id)
