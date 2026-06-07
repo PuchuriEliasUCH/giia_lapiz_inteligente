@@ -6,6 +6,11 @@
 dist/
 build/
 
+# Desarrollo
+/docs
+/lib
+AGENTS.md
+
 # Entorno
 .env
 venv/

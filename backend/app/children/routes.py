@@ -1,74 +1,64 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
-from app.children.model import Child
 from app.children.schemas import ChildCreate, ChildUpdate, ChildResponse
+from app.children import service
 from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/children", tags=["children"])
 
 
 @router.post("/", response_model=ChildResponse, status_code=status.HTTP_201_CREATED)
-def create_child(
+async def create_child(
     data: ChildCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    child = Child(**data.model_dump(), user_id=current_user.user_id)
-    db.add(child)
-    db.commit()
-    db.refresh(child)
-    return child
+    return await service.create_child(db, data, current_user.user_id)
 
 
 @router.get("/", response_model=list[ChildResponse])
-def get_children(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    return db.query(Child).filter(Child.user_id == current_user.user_id, Child.is_active == True).all()
+async def get_children(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return await service.get_children_by_user(db, current_user.user_id)
 
 
 @router.get("/{child_id}", response_model=ChildResponse)
-def get_child(
-    child_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+async def get_child(
+    child_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
-    child = (
-        db.query(Child)
-        .filter(Child.child_id == child_id, Child.user_id == current_user.user_id)
-        .first()
-    )
+    child = await service.get_child_by_id(db, child_id, current_user.user_id)
     if not child:
         raise HTTPException(status_code=404, detail="Niño no encontrado")
     return child
 
 
 @router.put("/{child_id}", response_model=ChildResponse)
-def update_child(
+async def update_child(
     child_id: int,
     data: ChildUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    child = (
-        db.query(Child)
-        .filter(Child.child_id == child_id, Child.user_id == current_user.user_id)
-        .first()
-    )
+    child = await service.get_child_by_id(db, child_id, current_user.user_id)
     if not child:
         raise HTTPException(status_code=404, detail="Niño no encontrado")
-    for key, value in data.model_dump(exclude_none=True).items():
-        setattr(child, key, value)
-    db.commit()
-    db.refresh(child)
-    return child
+    return await service.update_child(db, child, data)
 
 
 @router.patch("/{child_id}/deactivate", response_model=ChildResponse)
-def deactivate_child(child_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    child = db.query(Child).filter(Child.child_id == child_id, Child.user_id == current_user.user_id).first()
+async def deactivate_child(
+    child_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    child = await service.get_child_by_id(db, child_id, current_user.user_id)
     if not child:
         raise HTTPException(status_code=404, detail="Niño no encontrado")
     if not child.is_active:
         raise HTTPException(status_code=400, detail="El niño ya está desactivado")
-    child.is_active = False
-    db.commit()
-    db.refresh(child)
-    return child
+    return await service.deactivate_child(db, child)
