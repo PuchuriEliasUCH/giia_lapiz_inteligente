@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -8,6 +9,9 @@ import paho.mqtt.client as mqtt
 from app.core.config import settings
 from app.mqtt.schemas import IMUReading
 from app.sessions.buffer import session_buffer
+from app.sessions.watchdog import update_last_seen
+from app.ai.rules import evaluate_realtime
+from app.websocket.manager import manager
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +53,28 @@ def on_connect(client, userdata, flags, reason_code, properties):
         logger.error(f"MQTT error de conexión: {reason_code}")
 
 
-def on_message(client, userdata, msg):
+async def _handle_message(topic: str, payload: bytes) -> None:
     try:
-        raw = parse_payload(msg.payload.decode())
-        reading = IMUReading(**raw)
-        session_id = extract_session_id(msg.topic)
-        session_buffer.append(session_id, reading.model_dump())
+        raw = parse_payload(payload.decode())
+        reading = IMUReading(**raw).model_dump()
+        session_id = extract_session_id(topic)
+
+        session_buffer.append(session_id, reading)
+        update_last_seen(session_id)
+
+        alerts = evaluate_realtime(reading)
+        if alerts and manager.is_connected(session_id):
+            for alert in alerts:
+                await manager.send(session_id, alert)
     except Exception as e:
-        logger.warning(f"MQTT mensaje inválido en {msg.topic}: {e}")
+        logger.warning(f"MQTT mensaje inválido en {topic}: {e}")
+
+
+def on_message(client, userdata, msg):
+    loop = userdata.get("loop") if isinstance(userdata, dict) else None
+    if loop is None:
+        return
+    asyncio.run_coroutine_threadsafe(_handle_message(msg.topic, msg.payload), loop)
 
 
 mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
@@ -67,6 +85,7 @@ mqtt_client.on_message = on_message
 @asynccontextmanager
 async def lifespan_mqtt():
     logger.info("Iniciando cliente MQTT...")
+    mqtt_client.user_data_set({"loop": asyncio.get_event_loop()})
     try:
         mqtt_client.connect(settings.MQTT_BROKER, settings.MQTT_PORT)
         mqtt_client.loop_start()

@@ -52,6 +52,7 @@ services:
         condition: service_started
     volumes:
       - ./backend:/app
+      - raw_sessions_data:/raw_sessions
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -65,6 +66,7 @@ volumes:
   mysql_data:
   mosquitto_data:
   mosquitto_logs:
+  raw_sessions_data:
 
 networks:
   lapiz_network:

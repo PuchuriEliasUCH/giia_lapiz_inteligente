@@ -61,6 +61,7 @@ External systems must be treated as integration points.
 * Prefer existing project patterns.
 * Avoid unnecessary abstractions.
 * Respect existing architectural decisions.
+* **All functionality is restricted to registered users.** Every endpoint (HTTP, WebSocket, MQTT data ingestion) operates under an authenticated user context. Only `GET /health` and `POST /auth/*` are public. Resources must be validated as owned by the requesting user before any read or write operation.
 
 ---
 

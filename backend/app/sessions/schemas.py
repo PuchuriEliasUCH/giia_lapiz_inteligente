@@ -8,17 +8,8 @@ class SessionCreate(BaseModel):
     exercise_id: int
 
 
-class SessionEnd(BaseModel):
-    avg_pressure: Optional[float] = None
-    max_pressure: Optional[float] = None
-    pressure_stability: Optional[float] = None
-    movement_stability: Optional[float] = None
-    tremor_level: Optional[float] = None
-    posture_score: Optional[float] = None
-    total_errors: Optional[int] = None
-    feedback_count: Optional[int] = None
-    ai_score: Optional[float] = None
-    result_summary: Optional[str] = None
+class SessionEndRequest(BaseModel):
+    close_reason: str = "manual"
 
 
 class SessionResponse(BaseModel):
@@ -27,6 +18,7 @@ class SessionResponse(BaseModel):
     exercise_id: int
     started_at: datetime
     ended_at: Optional[datetime] = None
+    close_reason: Optional[str] = None
     avg_pressure: Optional[float] = None
     max_pressure: Optional[float] = None
     pressure_stability: Optional[float] = None

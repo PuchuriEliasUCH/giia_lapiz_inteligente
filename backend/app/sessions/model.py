@@ -1,10 +1,17 @@
+import enum
 from typing import Optional
 from datetime import datetime
-from sqlalchemy import Text, DateTime, Float, ForeignKey, func
+from sqlalchemy import Text, DateTime, Float, ForeignKey, func, Enum as SAEnum
 from sqlalchemy.dialects.mysql import INTEGER, SMALLINT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
+
+class CloseReason(str, enum.Enum):
+    manual = "manual"
+    timeout = "timeout"
+    ble_disconnect = "ble_disconnect"
 
 
 class Session(Base):
@@ -21,6 +28,9 @@ class Session(Base):
     )
     started_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    close_reason: Mapped[Optional[str]] = mapped_column(
+        SAEnum(CloseReason), nullable=True
+    )
     avg_pressure: Mapped[Optional[float]] = mapped_column(Float)
     max_pressure: Mapped[Optional[float]] = mapped_column(Float)
     pressure_stability: Mapped[Optional[float]] = mapped_column(Float)

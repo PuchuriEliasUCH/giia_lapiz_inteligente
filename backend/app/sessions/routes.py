@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
-from app.sessions.schemas import SessionCreate, SessionEnd, SessionResponse
+from app.sessions.schemas import SessionCreate, SessionEndRequest, SessionResponse
 from app.sessions import service
 from app.sessions.buffer import session_buffer
 from app.dependencies.auth import get_current_user
@@ -17,7 +17,10 @@ async def create_session(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    return await service.create_session(db, data)
+    session = await service.create_session(db, data, current_user.user_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Niño no encontrado")
+    return session
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
@@ -26,7 +29,7 @@ async def get_session(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    session = await service.get_session_by_id(db, session_id)
+    session = await service.get_session_by_id(db, session_id, current_user.user_id)
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     return session
@@ -40,16 +43,19 @@ async def list_sessions(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    return await service.get_sessions_by_child(db, child_id, skip, limit)
+    return await service.get_sessions_by_child(
+        db, child_id, current_user.user_id, skip, limit
+    )
 
 
 @router.patch("/sessions/{session_id}/end", response_model=SessionResponse)
 async def end_session(
     session_id: int,
+    body: SessionEndRequest,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    session = await service.get_session_by_id(db, session_id)
+    session = await service.get_session_by_id(db, session_id, current_user.user_id)
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     if session.ended_at is not None:
@@ -58,5 +64,8 @@ async def end_session(
     metrics = {}
     if csv_path:
         from app.sessions.metrics import calculate_metrics
+
         metrics = calculate_metrics(csv_path)
-    return await service.end_session(db, session, metrics)
+    return await service.end_session(
+        db, session, metrics, close_reason=body.close_reason
+    )

@@ -97,17 +97,39 @@ class TestSessions:
 
         resp = await client.patch(
             f"/sessions/{session_id}/end",
-            json={
-                "avg_pressure": 12.5,
-                "max_pressure": 45.0,
-                "result_summary": "Buen trabajo",
-            },
+            json={"close_reason": "manual"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["avg_pressure"] == 12.5
         assert data["ended_at"] is not None
+        assert data["close_reason"] == "manual"
+
+    async def test_end_session_with_close_reason(
+        self, client: AsyncClient, token: str, db_session
+    ):
+        exercise_id = await _ensure_seed_data(db_session, client, token)
+        create_child = await client.post(
+            "/children/",
+            json={"name": "Niño BLE"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        child_id = create_child.json()["child_id"]
+
+        create = await client.post(
+            "/sessions",
+            json={"child_id": child_id, "exercise_id": exercise_id},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        session_id = create.json()["session_id"]
+
+        resp = await client.patch(
+            f"/sessions/{session_id}/end",
+            json={"close_reason": "ble_disconnect"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["close_reason"] == "ble_disconnect"
 
     async def test_end_session_twice_returns_400(
         self, client: AsyncClient, token: str, db_session

@@ -5,7 +5,7 @@ import math
 
 BROKER = "localhost"
 PORT = 1883
-SESSION_ID = 10
+SESSION_ID = 13
 TOPIC = f"session/{SESSION_ID}/data"
 
 SEND_CSV = False  # False = JSON, True = CSV
