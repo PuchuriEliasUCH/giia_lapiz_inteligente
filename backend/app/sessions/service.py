@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.sessions.model import Session
-from app.sessions.schemas import SessionCreate, SessionEnd
+from app.sessions.schemas import SessionCreate
 
 
 async def create_session(db: AsyncSession, data: SessionCreate) -> Session:
@@ -31,9 +31,9 @@ async def get_sessions_by_child(
     return result.scalars().all()
 
 
-async def end_session(db: AsyncSession, session: Session, data: SessionEnd) -> Session:
+async def end_session(db, session, metrics: dict):
     session.ended_at = datetime.now(timezone.utc)
-    for key, value in data.model_dump(exclude_none=True).items():
+    for key, value in metrics.items():
         setattr(session, key, value)
     await db.commit()
     await db.refresh(session)

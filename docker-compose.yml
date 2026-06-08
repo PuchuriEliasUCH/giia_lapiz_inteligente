@@ -8,6 +8,7 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - TZ=America/Lima
     ports:
       - "3306:3306"
     volumes:
@@ -24,6 +25,8 @@ services:
 
   mosquitto:
     image: eclipse-mosquitto:2
+    ports: 
+      - "1883:1883"
     container_name: lapiz_mosquitto
     restart: unless-stopped
     volumes:

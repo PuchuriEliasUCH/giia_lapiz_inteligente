@@ -1,11 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.auth.routes import router as auth_router
 from app.children.routes import router as children_router
 from app.exercises.routes import router as exercises_router
 from app.sessions.routes import router as sessions_router
+from app.mqtt.client import lifespan_mqtt
 
-app = FastAPI(title="Lapiz Inteligente API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with lifespan_mqtt():
+        yield
+
+
+app = FastAPI(title="Lapiz Inteligente API", lifespan=lifespan)
 
 
 @app.exception_handler(Exception)

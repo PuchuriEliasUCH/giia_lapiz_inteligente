@@ -1,3 +1,5 @@
+set names utf8mb4;
+
 insert into
     stroke_types (name) 
 values

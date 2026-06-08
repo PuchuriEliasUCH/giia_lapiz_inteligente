@@ -46,7 +46,6 @@ async def list_sessions(
 @router.patch("/sessions/{session_id}/end", response_model=SessionResponse)
 async def end_session(
     session_id: int,
-    data: SessionEnd,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -55,5 +54,9 @@ async def end_session(
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     if session.ended_at is not None:
         raise HTTPException(status_code=400, detail="La sesión ya ha terminado")
-    await session_buffer.flush(session_id)
-    return await service.end_session(db, session, data)
+    csv_path = await session_buffer.flush_to_csv(session_id)
+    metrics = {}
+    if csv_path:
+        from app.sessions.metrics import calculate_metrics
+        metrics = calculate_metrics(csv_path)
+    return await service.end_session(db, session, metrics)

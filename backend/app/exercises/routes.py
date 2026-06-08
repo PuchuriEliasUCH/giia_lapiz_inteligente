@@ -16,6 +16,7 @@ router = APIRouter(prefix="", tags=["exercises"])
 @router.get("/stroke-types", response_model=list[StrokeTypeResponse])
 async def list_stroke_types(
     db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     return await service.get_stroke_types(db)
 
@@ -24,6 +25,7 @@ async def list_stroke_types(
 async def list_exercises(
     stroke_type_id: int | None = None,
     db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     return await service.get_exercises(db, stroke_type_id)
 
@@ -32,6 +34,7 @@ async def list_exercises(
 async def get_exercise(
     exercise_id: int,
     db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     exercise = await service.get_exercise_by_id(db, exercise_id)
     if not exercise:

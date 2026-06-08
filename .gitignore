@@ -9,7 +9,7 @@ build/
 # Desarrollo
 /docs
 /lib
-AGENTS.md
+# AGENTS.md
 
 # Entorno
 .env

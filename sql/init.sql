@@ -1,4 +1,4 @@
-create database if not exists GIIA_lapiz_inteligente;
+create database if not exists GIIA_lapiz_inteligente default character set utf8mb4;
 
 use GIIA_lapiz_inteligente;
 
