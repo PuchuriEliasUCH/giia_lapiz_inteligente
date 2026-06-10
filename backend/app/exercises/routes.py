@@ -10,10 +10,11 @@ from app.exercises.schemas import (
 from app.exercises import service
 from app.dependencies.auth import get_current_user
 
-router = APIRouter(prefix="", tags=["exercises"])
+stroke_types_router = APIRouter(prefix="/stroke-types", tags=["stroke-types"])
+exercises_router = APIRouter(prefix="/exercises", tags=["exercises"])
 
 
-@router.get("/stroke-types", response_model=list[StrokeTypeResponse])
+@stroke_types_router.get("/", response_model=list[StrokeTypeResponse])
 async def list_stroke_types(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -21,7 +22,7 @@ async def list_stroke_types(
     return await service.get_stroke_types(db)
 
 
-@router.get("/exercises", response_model=list[ExerciseResponse])
+@exercises_router.get("/", response_model=list[ExerciseResponse])
 async def list_exercises(
     stroke_type_id: int | None = None,
     db: AsyncSession = Depends(get_db),
@@ -30,7 +31,7 @@ async def list_exercises(
     return await service.get_exercises(db, stroke_type_id)
 
 
-@router.get("/exercises/{exercise_id}", response_model=ExerciseResponse)
+@exercises_router.get("/{exercise_id}", response_model=ExerciseResponse)
 async def get_exercise(
     exercise_id: int,
     db: AsyncSession = Depends(get_db),
@@ -42,8 +43,8 @@ async def get_exercise(
     return exercise
 
 
-@router.post(
-    "/exercises",
+@exercises_router.post(
+    "/",
     response_model=ExerciseResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -58,7 +59,7 @@ async def create_exercise(
     return await service.create_exercise(db, data)
 
 
-@router.put("/exercises/{exercise_id}", response_model=ExerciseResponse)
+@exercises_router.put("/{exercise_id}", response_model=ExerciseResponse)
 async def update_exercise(
     exercise_id: int,
     data: ExerciseUpdate,
@@ -71,8 +72,8 @@ async def update_exercise(
     return await service.update_exercise(db, exercise, data)
 
 
-@router.patch(
-    "/exercises/{exercise_id}/deactivate",
+@exercises_router.patch(
+    "/{exercise_id}/deactivate",
     response_model=ExerciseResponse,
 )
 async def deactivate_exercise(

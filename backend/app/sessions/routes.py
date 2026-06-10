@@ -4,7 +4,9 @@ from app.db.database import get_db
 from app.sessions.schemas import SessionCreate, SessionEndRequest, SessionResponse
 from app.sessions import service
 from app.sessions.buffer import session_buffer
+from app.sessions.metrics import calculate_metrics
 from app.dependencies.auth import get_current_user
+from app.mqtt.simulator import start_simulation, stop_simulation
 
 router = APIRouter(tags=["sessions"])
 
@@ -20,6 +22,7 @@ async def create_session(
     session = await service.create_session(db, data, current_user.user_id)
     if not session:
         raise HTTPException(status_code=404, detail="Niño no encontrado")
+    await start_simulation(session.session_id)
     return session
 
 
@@ -60,11 +63,10 @@ async def end_session(
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
     if session.ended_at is not None:
         raise HTTPException(status_code=400, detail="La sesión ya ha terminado")
+    await stop_simulation(session_id)
     csv_path = await session_buffer.flush_to_csv(session_id)
     metrics = {}
     if csv_path:
-        from app.sessions.metrics import calculate_metrics
-
         metrics = calculate_metrics(csv_path)
     return await service.end_session(
         db, session, metrics, close_reason=body.close_reason

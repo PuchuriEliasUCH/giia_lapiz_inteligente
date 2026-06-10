@@ -22,6 +22,8 @@ def update_last_seen(session_id: int) -> None:
 
 
 async def close_orphan_session(session_id: int) -> None:
+    from app.mqtt.simulator import stop_simulation
+
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Session).where(
@@ -34,6 +36,8 @@ async def close_orphan_session(session_id: int) -> None:
             with _lock:
                 _last_seen.pop(session_id, None)
             return
+
+        await stop_simulation(session_id)
 
         csv_path = await session_buffer.flush_to_csv(session_id)
         metrics = {}

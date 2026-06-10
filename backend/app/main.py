@@ -5,8 +5,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.auth.routes import router as auth_router
 from app.children.routes import router as children_router
-from app.exercises.routes import router as exercises_router
+from app.exercises.routes import stroke_types_router, exercises_router
 from app.sessions.routes import router as sessions_router
+from app.users.routes import router as users_router
 from app.websocket.router import router as ws_router
 from app.sessions.watchdog import session_watchdog
 from app.mqtt.client import lifespan_mqtt
@@ -43,6 +44,8 @@ async def health():
 
 app.include_router(auth_router)
 app.include_router(children_router)
+app.include_router(stroke_types_router)
 app.include_router(exercises_router)
 app.include_router(sessions_router)
+app.include_router(users_router)
 app.include_router(ws_router)

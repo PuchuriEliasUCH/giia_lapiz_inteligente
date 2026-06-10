@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     MQTT_BROKER: str
     MQTT_PORT: int = 1883
 
+    SIMULATED_DATA: bool = True
+
     @property
     def DATABASE_URL(self) -> str:
         return f"mysql+aiomysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}?charset=utf8mb4"

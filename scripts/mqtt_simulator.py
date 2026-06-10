@@ -1,14 +1,22 @@
-import paho.mqtt.client as mqtt
+import argparse
 import json
-import time
 import math
+import time
 
-BROKER = "localhost"
-PORT = 1883
-SESSION_ID = 13
+import paho.mqtt.client as mqtt
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--session-id", type=int, default=13)
+parser.add_argument("--broker", default="localhost")
+parser.add_argument("--port", type=int, default=1883)
+args = parser.parse_args()
+
+BROKER = args.broker
+PORT = args.port
+SESSION_ID = args.session_id
 TOPIC = f"session/{SESSION_ID}/data"
 
-SEND_CSV = False  # False = JSON, True = CSV
+SEND_CSV = False
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
